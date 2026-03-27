@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}用户管理 - 管理{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h4 class="fw-bold mb-0">
+        <i class="bi bi-people-fill text-primary me-2"></i>用户管理
+    </h4>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>返回面板
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">共 {{ users|length }} 名用户</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-primary">
+                <tr>
+                    <th>用户名</th>
+                    <th>姓名</th>
+                    <th class="d-none d-md-table-cell">角色</th>
+                    <th class="d-none d-md-table-cell">注册时间</th>
+                    <th class="text-center">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ u.username }}</div>
+                        <div class="d-md-none">
+                            {% if u.is_admin %}
+                            <span class="badge bg-warning text-dark">管理员</span>
+                            {% else %}
+                            <span class="badge bg-secondary">普通用户</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ u.name }}</td>
+                    <td class="d-none d-md-table-cell">
+                        {% if u.is_admin %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-shield-fill me-1"></i>管理员
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">普通用户</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell text-muted small">{{ u.created_at | fmt_dt }}</td>
+                    <td class="text-center">
+                        {% if u.id == current_user.id %}
+                        <span class="text-muted small"><i class="bi bi-person-check me-1"></i>当前用户</span>
+                        {% else %}
+                        <form method="post"
+                              action="{{ url_for('admin.delete_user', user_id=u.id) }}"
+                              onsubmit="return confirm('确认删除用户「{{ u.name }}」（{{ u.username }}）？')">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i>删除
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">暂无用户</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% block title %}主页 - 实验室试剂管理系统{% endblock %}
+
+{% block content %}
+
+<!-- ===== 页头 & 操作按钮 ===== -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h5 class="mb-0 fw-bold">
+        <i class="bi bi-archive-fill text-primary me-2"></i>试剂库存
+    </h5>
+    <div class="d-flex gap-2">
+        {% if current_cabinet %}
+        <a href="{{ url_for('main.export_cabinet', cabinet_id=current_cabinet.id) }}"
+           class="btn btn-outline-success btn-sm">
+            <i class="bi bi-download me-1"></i>导出 CSV
+        </a>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addReagentModal">
+            <i class="bi bi-plus-circle me-1"></i>新增试剂
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===== 试剂柜切换标签 ===== -->
+{% if cabinets %}
+<div class="mb-3">
+    <div class="d-flex flex-wrap gap-2">
+        {% for cab in cabinets %}
+        <a href="{{ url_for('main.index', cabinet_id=cab.id) }}"
+           class="btn btn-sm
+           {% if current_cabinet and current_cabinet.id == cab.id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <i class="bi bi-archive me-1"></i>{{ cab.name }}
+            {% if current_cabinet and current_cabinet.id == cab.id %}
+            <span class="badge bg-white text-primary ms-1">{{ reagents|length }}</span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    还没有试剂柜。
+    {% if current_user.is_admin %}
+    请前往 <a href="{{ url_for('admin.cabinets') }}">试剂柜管理</a> 添加。
+    {% else %}
+    请联系管理员添加试剂柜。
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- ===== 耗尽提醒区域 ===== -->
+{% if alerts %}
+<div class="mb-3">
+    <div class="alert alert-warning border-0 shadow-sm mb-2 py-2 px-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <strong>试剂耗尽提醒</strong>
+            <span class="badge bg-danger ms-1">{{ alerts|length }}</span>
+        </div>
+    </div>
+    <div class="row g-2">
+        {% for alert in alerts %}
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-2">
+                            <div class="fw-bold text-warning-emphasis">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>{{ alert.reagent_name }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                {% if alert.cas_number %}
+                                <span class="me-2">CAS: {{ alert.cas_number }}</span>
+                                {% endif %}
+                                <span>规格: {{ alert.specification or '-' }}</span>
+                            </div>
+                            <div class="text-muted" style="font-size:0.75em">
+                                耗尽时间: {{ alert.created_at | fmt_dt }}
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            <button class="btn btn-warning btn-sm"
+                                    onclick="openRestockAlert({{ alert.id }}, '{{ alert.reagent_name|e }}', '{{ alert.specification|e }}')">
+                                <i class="bi bi-box-arrow-in-down"></i> 补货
+                            </button>
+                            {% if current_user.is_admin %}
+                            <form method="post"
+                                  action="{{ url_for('admin.delete_alert', alert_id=alert.id) }}"
+                                  onsubmit="return confirm('确认删除此提醒？')">
+                                <button class="btn btn-outline-danger btn-sm w-100">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ===== 试剂表格 ===== -->
+{% if current_cabinet %}
+    {% if reagents %}
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">
+                <i class="bi bi-table me-1"></i>{{ current_cabinet.name }}
+                {% if current_cabinet.location %}
+                <small class="text-muted ms-1">（{{ current_cabinet.location }}）</small>
+                {% endif %}
+            </span>
+            <span class="text-muted small">共 {{ reagents|length }} 种试剂</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0 reagent-table">
+                <thead class="table-primary">
+                    <tr>
+                        <th>试剂名称</th>
+                        <th>CAS号</th>
+                        <th class="d-none d-md-table-cell">规格</th>
+                        <th>数量</th>
+                        <th class="d-none d-lg-table-cell">最近入库</th>
+                        <th class="d-none d-lg-table-cell">最近领用</th>
+                        <th class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reagents %}
+                    <tr class="{% if r.quantity <= 5 %}table-warning{% endif %}">
+                        <td>
+                            <div class="fw-semibold">{{ r.name }}</div>
+                            <div class="d-md-none text-muted small">{{ r.specification }}</div>
+                        </td>
+                        <td class="text-muted small">{{ r.cas_number or '-' }}</td>
+                        <td class="d-none d-md-table-cell text-muted small">{{ r.specification }}</td>
+                        <td>
+                            <span class="badge {% if r.quantity <= 0 %}bg-danger{% elif r.quantity <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
+                                {{ r.quantity | fmt_qty }}
+                            </span>
+                        </td>
+                        <td class="d-none d-lg-table-cell text-muted small">{{ r.last_stock_in | fmt_dt }}</td>
+                        <td class="d-none d-lg-table-cell text-muted small">{{ r.last_withdrawal | fmt_dt }}</td>
+                        <td class="text-center text-nowrap">
+                            <button class="btn btn-outline-primary btn-sm me-1"
+                                    onclick="openStockIn({{ r.id }}, '{{ r.name|e }}', '{{ r.specification|e }}')">
+                                <i class="bi bi-box-arrow-in-down"></i>
+                                <span class="d-none d-sm-inline">入库</span>
+                            </button>
+                            <button class="btn btn-outline-success btn-sm me-1"
+                                    onclick="openWithdrawal({{ r.id }}, '{{ r.name|e }}', {{ r.quantity }}, '{{ r.specification|e }}')">
+                                <i class="bi bi-box-arrow-up"></i>
+                                <span class="d-none d-sm-inline">领用</span>
+                            </button>
+                            {% if current_user.is_admin %}
+                            <form class="d-inline" method="post"
+                                  action="{{ url_for('admin.delete_reagent', reagent_id=r.id) }}"
+                                  onsubmit="return confirm('确认删除试剂「{{ r.name }}」？此操作不可撤销。')">
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        该试剂柜暂无试剂，点击右上角"新增试剂"按钮添加
+    </div>
+    {% endif %}
+{% endif %}
+
+
+<!-- ============================================================
+     模态框区域
+============================================================ -->
+
+<!-- 新增试剂 -->
+<div class="modal fade" id="addReagentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('reagent.add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle-fill text-success me-2"></i>新增试剂</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="cabinet_id"
+                           value="{{ current_cabinet.id if current_cabinet else '' }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            试剂名称 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="name"
+                               placeholder="例如：乙醇、氯化钠" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">CAS号
+                            <span class="text-muted fw-normal small">（选填）</span>
+                        </label>
+                        <input type="text" class="form-control" name="cas_number"
+                               placeholder="例如：64-17-5">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            规格 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="specification"
+                               placeholder="例如：500ml、100g，小写无空格" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            数量 <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" name="quantity"
+                               placeholder="请输入数量" min="0.01" step="any" required>
+                        <div class="form-text">若试剂已存在（名称+规格+CAS号相同），将自动执行入库操作</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success fw-semibold">
+                        <i class="bi bi-plus-circle me-1"></i>确认添加
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 入库模态框 -->
+<div class="modal fade" id="stockInModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form method="post" id="stockInForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-box-arrow-in-down text-primary me-2"></i>入库</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">
+                        试剂：<strong id="stockInName"></strong>
+                    </p>
+                    <p class="text-muted small mb-3" id="stockInSpec"></p>
+                    <label class="form-label fw-semibold">
+                        入库数量 <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" class="form-control" name="quantity"
+                           id="stockInQty" placeholder="请输入数量" min="0.01" step="any" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">
+                        <i class="bi bi-check-circle me-1"></i>确认入库
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 领用模态框 -->
+<div class="modal fade" id="withdrawalModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form method="post" id="withdrawalForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-box-arrow-up text-success me-2"></i>领用</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">
+                        试剂：<strong id="withdrawalName"></strong>
+                    </p>
+                    <p class="text-muted small mb-3" id="withdrawalSpec"></p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold mb-0">
+                                领用数量 <span class="text-danger">*</span>
+                            </label>
+                            <small class="text-muted">库存: <span id="withdrawalStock"></span></small>
+                        </div>
+                        <input type="number" class="form-control" name="quantity"
+                               id="withdrawalQty" placeholder="请输入数量" min="0.01" step="any" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success fw-semibold">
+                        <i class="bi bi-check-circle me-1"></i>确认领用
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 补货（从耗尽提醒入库）模态框 -->
+<div class="modal fade" id="restockAlertModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form method="post" id="restockAlertForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-arrow-repeat text-warning me-2"></i>补货入库</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">
+                        试剂：<strong id="restockName"></strong>
+                    </p>
+                    <p class="text-muted small mb-3" id="restockSpec"></p>
+                    <label class="form-label fw-semibold">
+                        入库数量 <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" class="form-control" name="quantity"
+                           id="restockQty" placeholder="请输入补货数量"
+                           min="0.01" step="any" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning fw-semibold">
+                        <i class="bi bi-check-circle me-1"></i>确认补货
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openStockIn(reagentId, name, spec) {
+    document.getElementById('stockInForm').action = '/reagent/stock_in/' + reagentId;
+    document.getElementById('stockInName').textContent = name;
+    document.getElementById('stockInSpec').textContent = '规格：' + spec;
+    document.getElementById('stockInQty').value = '';
+    new bootstrap.Modal(document.getElementById('stockInModal')).show();
+    document.getElementById('stockInQty').focus();
+}
+
+function openWithdrawal(reagentId, name, stock, spec) {
+    document.getElementById('withdrawalForm').action = '/reagent/withdrawal/' + reagentId;
+    document.getElementById('withdrawalName').textContent = name;
+    document.getElementById('withdrawalSpec').textContent = '规格：' + spec;
+    document.getElementById('withdrawalStock').textContent = stock;
+    document.getElementById('withdrawalQty').value = '';
+    document.getElementById('withdrawalQty').max = stock;
+    new bootstrap.Modal(document.getElementById('withdrawalModal')).show();
+    document.getElementById('withdrawalQty').focus();
+}
+
+function openRestockAlert(alertId, name, spec) {
+    document.getElementById('restockAlertForm').action = '/reagent/restock_alert/' + alertId;
+    document.getElementById('restockName').textContent = name;
+    document.getElementById('restockSpec').textContent = '规格：' + spec;
+    document.getElementById('restockQty').value = '';
+    new bootstrap.Modal(document.getElementById('restockAlertModal')).show();
+    document.getElementById('restockQty').focus();
+}
+</script>
+{% endblock %}

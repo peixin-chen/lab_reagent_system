@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}注册 - 电子组试剂管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-plus-fill text-success" style="font-size:2.5rem"></i>
+                    <h4 class="mt-2 fw-bold">注册新账户</h4>
+                </div>
+
+                <form method="post" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            用户名 <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                            <input type="text" class="form-control" name="username"
+                                   placeholder="至少3个字符" required autofocus minlength="3">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            真实姓名 <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                            <input type="text" class="form-control" name="name"
+                                   placeholder="请输入您的真实姓名" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            密码 <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" class="form-control" name="password"
+                                   placeholder="至少6个字符" required id="regPwd" minlength="6">
+                            <button class="btn btn-outline-secondary" type="button"
+                                    onclick="togglePwd('regPwd', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            确认密码 <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" class="form-control" name="confirm_password"
+                                   placeholder="请再次输入密码" required id="regPwd2">
+                            <button class="btn btn-outline-secondary" type="button"
+                                    onclick="togglePwd('regPwd2', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success btn-lg fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i>注册
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-3">
+                <p class="text-center text-muted small mb-0">
+                    已有账户？
+                    <a href="{{ url_for('auth.login') }}" class="fw-semibold">返回登录</a>
+                </p>
+                <hr class="my-3">
+                <p class="text-center text-muted small mb-0">
+                    安全防护有限，请不要使用自己常用的密码。忘记密码请联系管理员
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

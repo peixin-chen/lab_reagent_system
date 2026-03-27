@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}控制面板 - 管理{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h4 class="fw-bold mb-0">
+        <i class="bi bi-speedometer2 text-primary me-2"></i>管理员控制面板
+    </h4>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 stat-card" style="border-left:4px solid #0d6efd!important">
+            <div class="card-body text-center py-3">
+                <i class="bi bi-people-fill fs-2 text-primary mb-2 d-block"></i>
+                <div class="fs-3 fw-bold text-primary">{{ stats.users }}</div>
+                <div class="text-muted small">注册用户</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #198754!important">
+            <div class="card-body text-center py-3">
+                <i class="bi bi-archive-fill fs-2 text-success mb-2 d-block"></i>
+                <div class="fs-3 fw-bold text-success">{{ stats.cabinets }}</div>
+                <div class="text-muted small">试剂柜</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #0dcaf0!important">
+            <div class="card-body text-center py-3">
+                <i class="bi bi-flask-fill fs-2 text-info mb-2 d-block"></i>
+                <div class="fs-3 fw-bold text-info">{{ stats.reagents }}</div>
+                <div class="text-muted small">在库试剂</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #ffc107!important">
+            <div class="card-body text-center py-3">
+                <i class="bi bi-exclamation-triangle-fill fs-2 text-warning mb-2 d-block"></i>
+                <div class="fs-3 fw-bold text-warning">{{ stats.alerts }}</div>
+                <div class="text-muted small">耗尽提醒</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快捷入口 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary w-100 py-3">
+            <i class="bi bi-people-fill d-block fs-4 mb-1"></i>用户管理
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('admin.cabinets') }}" class="btn btn-outline-success w-100 py-3">
+            <i class="bi bi-archive-fill d-block fs-4 mb-1"></i>试剂柜管理
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('admin.records') }}" class="btn btn-outline-info w-100 py-3">
+            <i class="bi bi-journal-text d-block fs-4 mb-1"></i>操作记录
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary w-100 py-3">
+            <i class="bi bi-house-fill d-block fs-4 mb-1"></i>返回主页
+        </a>
+    </div>
+</div>
+
+<!-- 最近操作记录 -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-2">
+        <strong><i class="bi bi-clock-history me-2"></i>最近操作记录</strong>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>时间</th>
+                    <th>操作</th>
+                    <th>试剂</th>
+                    <th class="d-none d-md-table-cell">规格</th>
+                    <th>数量</th>
+                    <th class="d-none d-md-table-cell">试剂柜</th>
+                    <th class="d-none d-lg-table-cell">操作人</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in recent_records %}
+                <tr>
+                    <td class="text-muted small text-nowrap">{{ rec.timestamp | fmt_dt }}</td>
+                    <td>
+                        {% if rec.operation_type == 'in' %}
+                        <span class="badge bg-primary">入库</span>
+                        {% else %}
+                        <span class="badge bg-success">领用</span>
+                        {% endif %}
+                    </td>
+                    <td class="small fw-semibold">{{ rec.reagent_name }}</td>
+                    <td class="d-none d-md-table-cell text-muted small">{{ rec.specification or '-' }}</td>
+                    <td class="small">{{ rec.quantity | fmt_qty }}</td>
+                    <td class="d-none d-md-table-cell text-muted small">{{ rec.cabinet_name or '-' }}</td>
+                    <td class="d-none d-lg-table-cell text-muted small">{{ rec.user_name or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">暂无记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white text-end">
+        <a href="{{ url_for('admin.records') }}" class="btn btn-outline-primary btn-sm">
+            查看全部记录 <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}

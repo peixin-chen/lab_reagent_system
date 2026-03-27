@@ -1,0 +1,189 @@
+/* ============================================================
+   实验室试剂管理系统 - 全局样式
+============================================================ */
+
+/* 基础 */
+body {
+    background-color: #f4f6f9;
+    font-size: 0.95rem;
+}
+
+/* Flash 消息 */
+.flash-messages {
+    margin-bottom: 0.75rem;
+}
+
+.flash-messages .alert {
+    font-size: 0.9rem;
+}
+
+/* 导航栏 */
+.navbar-brand {
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+}
+
+.navbar .input-group {
+    min-width: 180px;
+}
+
+/* 卡片通用 */
+.card {
+    border-radius: 0.6rem;
+}
+
+.card-header {
+    border-radius: 0.6rem 0.6rem 0 0 !important;
+    border-bottom: 1px solid #e8eaf0;
+}
+
+/* 表格 */
+.reagent-table th,
+.reagent-table td {
+    vertical-align: middle;
+    padding: 0.55rem 0.75rem;
+}
+
+.reagent-table th {
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+.table-responsive {
+    border-radius: 0 0 0.6rem 0.6rem;
+}
+
+/* 试剂柜切换标签 */
+.cabinet-tabs {
+    scrollbar-width: thin;
+    scrollbar-color: #c8ccd4 transparent;
+}
+
+.cabinet-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.cabinet-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cabinet-tabs::-webkit-scrollbar-thumb {
+    background-color: #c8ccd4;
+    border-radius: 2px;
+}
+
+/* 数量徽章 */
+.badge.fs-6 {
+    font-size: 0.85rem !important;
+    font-weight: 600;
+    min-width: 2.5em;
+    text-align: center;
+}
+
+/* 统计卡片 */
+.stat-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 耗尽提醒卡片 */
+.card.border-warning {
+    border-width: 1.5px !important;
+}
+
+/* 模态框 */
+.modal-header {
+    padding: 0.85rem 1rem;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-footer {
+    padding: 0.65rem 1rem;
+}
+
+/* 按钮微调 */
+.btn-sm {
+    font-size: 0.82rem;
+}
+
+/* 分页 */
+.pagination .page-link {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* 登录/注册卡片 */
+.card .input-group-text {
+    background-color: #f8f9fa;
+    border-right: none;
+}
+
+.card .form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* 响应式：手机端行内操作按钮间距 */
+@media (max-width: 575px) {
+    .reagent-table td.text-center .btn {
+        padding: 0.3rem 0.5rem;
+    }
+
+    .reagent-table th,
+    .reagent-table td {
+        padding: 0.45rem 0.5rem;
+        font-size: 0.82rem;
+    }
+}
+
+/* 低数量行高亮 */
+tr.table-warning td {
+    background-color: #fff9e6 !important;
+}
+
+/* 管理页面快捷入口按钮 */
+a.btn.py-3 {
+    font-size: 0.9rem;
+}
+
+/* 滚动条全局美化（Webkit） */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #c0c4cc;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #a0a4ae;
+}
+
+/* 悬浮时表格行 */
+.table-hover > tbody > tr:hover > td {
+    background-color: rgba(13, 110, 253, 0.04);
+}
+
+/* 工具提示增强 */
+[data-bs-toggle="tooltip"] {
+    cursor: pointer;
+}
+
+/* Footer 间距 */
+.pb-5 {
+    padding-bottom: 3rem !important;
+}

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}试剂柜管理 - 管理{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h4 class="fw-bold mb-0">
+        <i class="bi bi-archive-fill text-success me-2"></i>试剂柜管理
+    </h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCabinetModal">
+            <i class="bi bi-plus-circle me-1"></i>新增试剂柜
+        </button>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>返回
+        </a>
+    </div>
+</div>
+
+{% if cabinets %}
+<div class="row g-3">
+    {% for cab in cabinets %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title fw-bold mb-1">
+                            <i class="bi bi-archive text-success me-2"></i>{{ cab.name }}
+                        </h5>
+                        {% if cab.location %}
+                        <div class="text-muted small mb-1">
+                            <i class="bi bi-geo-alt me-1"></i>{{ cab.location }}
+                        </div>
+                        {% endif %}
+                        {% if cab.description %}
+                        <div class="text-muted small">{{ cab.description }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="badge bg-primary rounded-pill">{{ cab.reagents|length }} 种试剂</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm flex-grow-1"
+                        onclick="openEditCabinet({{ cab.id }}, '{{ cab.name|e }}', '{{ cab.location|e }}', '{{ cab.description|e }}')">
+                    <i class="bi bi-pencil me-1"></i>编辑
+                </button>
+                <form method="post"
+                      action="{{ url_for('admin.delete_cabinet', cabinet_id=cab.id) }}"
+                      onsubmit="return confirm('确认删除试剂柜「{{ cab.name }}」？\n注意：将同时删除其中所有试剂和提醒！')">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash me-1"></i>删除
+                    </button>
+                </form>
+                <a href="{{ url_for('main.index', cabinet_id=cab.id) }}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eye me-1"></i>查看
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-archive fs-1 d-block mb-2"></i>
+    还没有任何试剂柜，点击右上角"新增试剂柜"开始使用
+</div>
+{% endif %}
+
+
+<!-- 新增试剂柜模态框 -->
+<div class="modal fade" id="addCabinetModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('admin.add_cabinet') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle-fill text-success me-2"></i>新增试剂柜
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            试剂柜名称 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="name"
+                               placeholder="例如：A区1号柜" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            位置 <span class="text-muted fw-normal small">（选填）</span>
+                        </label>
+                        <input type="text" class="form-control" name="location"
+                               placeholder="例如：实验室东侧">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            备注 <span class="text-muted fw-normal small">（选填）</span>
+                        </label>
+                        <textarea class="form-control" name="description" rows="2"
+                                  placeholder="其他说明信息"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success fw-semibold">
+                        <i class="bi bi-plus-circle me-1"></i>确认添加
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑试剂柜模态框 -->
+<div class="modal fade" id="editCabinetModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editCabinetForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-fill text-primary me-2"></i>编辑试剂柜
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            试剂柜名称 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="name"
+                               id="editCabName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">位置</label>
+                        <input type="text" class="form-control" name="location"
+                               id="editCabLocation">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">备注</label>
+                        <textarea class="form-control" name="description" rows="2"
+                                  id="editCabDesc"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">
+                        <i class="bi bi-check-circle me-1"></i>保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditCabinet(id, name, location, description) {
+    document.getElementById('editCabinetForm').action = '/admin/cabinets/edit/' + id;
+    document.getElementById('editCabName').value = name;
+    document.getElementById('editCabLocation').value = location;
+    document.getElementById('editCabDesc').value = description;
+    new bootstrap.Modal(document.getElementById('editCabinetModal')).show();
+}
+</script>
+{% endblock %}
