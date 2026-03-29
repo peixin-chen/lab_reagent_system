@@ -47,7 +47,8 @@ def search():
     if query:
         results = Reagent.query.filter(
             (Reagent.name.ilike(f'%{query}%')) |
-            (Reagent.cas_number.ilike(f'%{query}%'))
+            (Reagent.cas_number.ilike(f'%{query}%')) |
+            (Reagent.product_number.ilike(f'%{query}%'))
         ).order_by(Reagent.name).all()
 
     cabinets = Cabinet.query.order_by(Cabinet.name).all()
@@ -66,11 +67,12 @@ def export_cabinet(cabinet_id):
     # 写入 UTF-8 BOM，确保 Excel 直接打开不乱码
     si.write('\ufeff')
     writer = csv.writer(si)
-    writer.writerow(['试剂名称', 'CAS号', '规格', '当前数量', '最近入库时间', '最近领用时间', '所属试剂柜'])
+    writer.writerow(['试剂名称', 'CAS号', '货号', '规格', '当前数量', '最近入库时间', '最近领用时间', '所属试剂柜'])
     for r in reagents:
         writer.writerow([
             r.name,
             r.cas_number or '',
+            r.product_number or '',
             r.specification or '',
             r.quantity,
             r.last_stock_in.strftime('%Y-%m-%d %H:%M') if r.last_stock_in else '',
