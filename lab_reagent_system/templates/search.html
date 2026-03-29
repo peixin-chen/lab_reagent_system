@@ -17,7 +17,7 @@
         <form action="{{ url_for('main.search') }}" method="get">
             <div class="input-group">
                 <input type="search" class="form-control" name="q"
-                       value="{{ query }}" placeholder="输入试剂名称或CAS号…" autofocus>
+                       value="{{ query }}" placeholder="输入试剂名称、CAS号或货号" autofocus>
                 <button class="btn btn-primary" type="submit">
                     <i class="bi bi-search me-1"></i>搜索
                 </button>
@@ -40,6 +40,7 @@
                     <tr>
                         <th>试剂名称</th>
                         <th>CAS号</th>
+                        <th>货号</th>
                         <th class="d-none d-md-table-cell">规格</th>
                         <th>数量</th>
                         <th class="d-none d-md-table-cell">所属试剂柜</th>
@@ -59,6 +60,7 @@
                             </div>
                         </td>
                         <td class="text-muted small">{{ r.cas_number or '-' }}</td>
+                        <td class="text-muted small">{{ r.product_number or '-' }}</td>
                         <td class="d-none d-md-table-cell text-muted small">{{ r.specification }}</td>
                         <td>
                             <span class="badge {% if r.quantity <= 0 %}bg-danger{% elif r.quantity <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
