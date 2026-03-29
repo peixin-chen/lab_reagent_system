@@ -73,9 +73,6 @@
                                 {% if alert.cas_number %}
                                 <span class="me-2">CAS: {{ alert.cas_number }}</span>
                                 {% endif %}
-                                {% if alert.product_number %}
-                                <span class="me-2">(货号: {{ alert.product_number }})</span>
-                                {% endif %}
                                 <span>规格: {{ alert.specification or '-' }}</span>
                             </div>
                             <div class="text-muted" style="font-size:0.75em">
@@ -125,7 +122,6 @@
                     <tr>
                         <th>试剂名称</th>
                         <th>CAS号</th>
-                        <th>货号</th>
                         <th class="d-none d-md-table-cell">规格</th>
                         <th>数量</th>
                         <th class="d-none d-lg-table-cell">最近入库</th>
@@ -141,7 +137,6 @@
                             <div class="d-md-none text-muted small">{{ r.specification }}</div>
                         </td>
                         <td class="text-muted small">{{ r.cas_number or '-' }}</td>
-                        <td class="text-muted small">{{ r.product_number or '-' }}</td>
                         <td class="d-none d-md-table-cell text-muted small">{{ r.specification }}</td>
                         <td>
                             <span class="badge {% if r.quantity <= 0 %}bg-danger{% elif r.quantity <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
@@ -215,13 +210,6 @@
                         </label>
                         <input type="text" class="form-control" name="cas_number"
                                placeholder="例如：64-17-5">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">货号
-                            <span class="text-muted fw-normal small">（选填）</span>
-                        </label>
-                        <input type="text" class="form-control" name="product_number" max_length="100"
-                               placeholder="试剂采购系统的货号">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
