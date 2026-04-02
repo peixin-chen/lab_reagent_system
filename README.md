@@ -78,6 +78,7 @@ lab_reagent/
 └── static/
     ├── css/style.css       # 自定义全局样式
     └── js/main.js          # 全局 JavaScript（密码切换、防重提交等）
+    └── docs/USER_DOC.pdf   # 用户操作手册
 ```
 
 ---
