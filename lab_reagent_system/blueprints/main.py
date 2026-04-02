@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, make_response
+from flask import Blueprint, render_template, request, make_response, send_from_directory
 from flask_login import login_required
 from models import Cabinet, Reagent, DepletionAlert
 import csv
 import io
+import os
 
 main_bp = Blueprint('main', __name__)
 
@@ -90,3 +91,10 @@ def export_cabinet(cabinet_id):
         f"attachment; filename*=UTF-8''{encoded_filename}"
     )
     return output
+    
+@main_bp.route('/user-doc')
+@login_required
+def user_doc():
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    docs_dir = os.path.join(base_dir, 'static', 'docs')
+    return send_from_directory(docs_dir, 'USER_DOC.pdf')
