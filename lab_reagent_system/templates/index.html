@@ -162,6 +162,18 @@
                                 <span class="d-none d-sm-inline">领用</span>
                             </button>
                             {% if current_user.is_admin %}
+                            <button class="btn btn-outline-warning btn-sm me-1"
+                                onclick="openEditReagent(
+                                  {{ r.id }},
+                                  '{{ r.name|e }}',
+                                  '{{ (r.cas_number or '')|e }}',
+                                  '{{ (r.product_number or '')|e }}',
+                                  '{{ r.specification|e }}',
+                                  '{{ r.quantity }}'
+                                )">
+                              <i class="bi bi-pencil-square"></i>
+                              <span class="d-none d-sm-inline">编辑</span>
+                            </button>
                             <form class="d-inline" method="post"
                                   action="{{ url_for('admin.delete_reagent', reagent_id=r.id) }}"
                                   onsubmit="return confirm('确认删除试剂「{{ r.name }}」？此操作不可撤销。')">
@@ -349,6 +361,58 @@
     </div>
 </div>
 
+<!-- 编辑试剂模态框 -->
+<div class="modal fade" id="editReagentModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="editReagentForm">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-pencil-square text-warning me-2"></i>编辑试剂
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">试剂名称 *</label>
+            <input type="text" class="form-control" name="name" id="editName" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">CAS号</label>
+            <input type="text" class="form-control" name="cas_number" id="editCas">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">货号</label>
+            <input type="text" class="form-control" name="product_number" id="editProductNumber">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">规格 *</label>
+            <input type="text" class="form-control" name="specification" id="editSpec" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">数量 *</label>
+            <input type="number" class="form-control" name="quantity" id="editQty"
+                   min="0" step="any" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-warning fw-semibold">
+            <i class="bi bi-check2-circle me-1"></i>保存修改
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
 {% endblock %}
 
 {% block scripts %}
@@ -381,5 +445,18 @@ function openRestockAlert(alertId, name, spec) {
     new bootstrap.Modal(document.getElementById('restockAlertModal')).show();
     document.getElementById('restockQty').focus();
 }
+
+function openEditReagent(reagentId, name, casNumber, productNumber, spec, quantity) {
+  document.getElementById('editReagentForm').action = '/reagent/edit/' + reagentId;
+  document.getElementById('editName').value = name;
+  document.getElementById('editCas').value = casNumber || '';
+  document.getElementById('editProductNumber').value = productNumber || '';
+  document.getElementById('editSpec').value = spec;
+  document.getElementById('editQty').value = quantity;
+
+  new bootstrap.Modal(document.getElementById('editReagentModal')).show();
+  setTimeout(() => document.getElementById('editName').focus(), 300);
+}
+
 </script>
 {% endblock %}
