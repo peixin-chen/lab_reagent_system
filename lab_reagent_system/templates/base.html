@@ -42,6 +42,12 @@
                         <i class="bi bi-house-fill"></i> 主页
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}"
+                       href="{{ url_for('main.user_doc') }}" target="_blank">
+                        <i class="bi bi-house-fill"></i> 操作文档
+                    </a>
+                </li>
                 {% if current_user.is_admin %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle {% if request.blueprint == 'admin' %}active{% endif %}"
