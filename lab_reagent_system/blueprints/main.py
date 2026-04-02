@@ -26,7 +26,7 @@ def index():
 
         reagents = Reagent.query.filter_by(
             cabinet_id=current_cabinet.id
-        ).order_by(Reagent.name).all()
+        ).order_by(Reagent.last_stock_in.desc()).all()
 
         alerts = DepletionAlert.query.filter_by(
             cabinet_id=current_cabinet.id
@@ -62,7 +62,7 @@ def search():
 @login_required
 def export_cabinet(cabinet_id):
     cabinet = Cabinet.query.get_or_404(cabinet_id)
-    reagents = Reagent.query.filter_by(cabinet_id=cabinet_id).order_by(Reagent.name).all()
+    reagents = Reagent.query.filter_by(cabinet_id=cabinet_id).order_by(Reagent.last_stock_in.desc()).all()
 
     si = io.StringIO()
     # 写入 UTF-8 BOM，确保 Excel 直接打开不乱码
