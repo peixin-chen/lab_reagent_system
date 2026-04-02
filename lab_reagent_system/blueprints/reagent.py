@@ -92,6 +92,77 @@ def add():
 
     return redirect(back_url)
 
+@reagent_bp.route('/edit/<int:reagent_id>', methods=['POST'])
+@login_required
+def edit(reagent_id):
+    if not current_user.is_admin:
+        flash('只有管理员可以修改试剂信息', 'danger')
+        return redirect(url_for('main.index'))
+
+    reagent = Reagent.query.get_or_404(reagent_id)
+
+    name = request.form.get('name', '').strip()
+    cas = request.form.get('cas_number', '').strip() or None
+    product_number = request.form.get('product_number', '').strip() or None
+    spec = request.form.get('specification', '').strip()
+
+    try:
+        quantity = float(request.form.get('quantity', 0))
+    except (ValueError, TypeError):
+        quantity = -1
+
+    from_search = request.form.get('from_search', '').strip()
+    back_url = (
+        url_for('main.search', q=from_search)
+        if from_search else
+        url_for('main.index', cabinet_id=reagent.cabinet_id)
+    )
+
+    if not name:
+        flash('试剂名称不能为空', 'danger')
+        return redirect(back_url)
+
+    if not spec:
+        flash('规格不能为空', 'danger')
+        return redirect(back_url)
+
+    if quantity < 0:
+        flash('数量不能小于0', 'danger')
+        return redirect(back_url)
+
+    # 避免编辑后与同柜中其他试剂重复
+    q = Reagent.query.filter(
+        Reagent.id != reagent.id,
+        Reagent.cabinet_id == reagent.cabinet_id,
+        Reagent.name == name,
+        Reagent.specification == spec
+    )
+
+    if cas:
+        q = q.filter(Reagent.cas_number == cas)
+    else:
+        q = q.filter((Reagent.cas_number == None) | (Reagent.cas_number == ''))
+
+    if product_number:
+        q = q.filter(Reagent.product_number == product_number)
+    else:
+        q = q.filter((Reagent.product_number == None) | (Reagent.product_number == ''))
+
+    duplicate = q.first()
+    if duplicate:
+        flash('修改失败：当前试剂柜中已存在相同名称/规格/CAS/货号的试剂条目', 'danger')
+        return redirect(back_url)
+
+    reagent.name = name
+    reagent.cas_number = cas
+    reagent.product_number = product_number
+    reagent.specification = spec
+    reagent.quantity = quantity
+
+    db.session.commit()
+    flash(f'试剂“{reagent.name}”信息修改成功', 'success')
+    return redirect(back_url)
+
 
 @reagent_bp.route('/stock_in/<int:reagent_id>', methods=['POST'])
 @login_required
@@ -215,7 +286,7 @@ def restock_alert(alert_id):
         )
         db.session.add(reagent)
         db.session.flush()
-        _save_record(reagent.id, alert.reagent_name, alert.cas_number,
+        _save_record(reagent.id, alert.reagent_name, alert.cas_number, alert.product_number,
                      alert.specification, cabinet.name, quantity, 'in')
 
     db.session.delete(alert)
