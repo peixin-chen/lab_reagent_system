@@ -40,7 +40,7 @@
                     <tr>
                         <th>试剂名称</th>
                         <th>CAS号</th>
-                        <th>货号</th>
+                        <th class="d-none d-md-table-cell">货号</th>
                         <th class="d-none d-md-table-cell">规格</th>
                         <th>数量</th>
                         <th class="d-none d-md-table-cell">所属试剂柜</th>
@@ -58,9 +58,12 @@
                             <div class="d-md-none text-muted small">
                                 <i class="bi bi-archive me-1"></i>{{ r.cabinet.name }}
                             </div>
+                            {% if r.note %}
+                              <div class="text-muted small mt-1">{{ r.note }}</div>
+                            {% endif %}
                         </td>
                         <td class="text-muted small">{{ r.cas_number or '-' }}</td>
-                        <td class="text-muted small">{{ r.product_number or '-' }}</td>
+                        <td class="d-none d-md-table-cell text-muted small">{{ r.product_number or '-' }}</td>
                         <td class="d-none d-md-table-cell text-muted small">{{ r.specification }}</td>
                         <td>
                             <span class="badge {% if r.quantity <= 0 %}bg-danger{% elif r.quantity <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
@@ -86,7 +89,6 @@
                                 <i class="bi bi-box-arrow-up"></i>
                                 <span class="d-none d-sm-inline">领用</span>
                             </button>
-                            {% if current_user.is_admin %}
                             <button class="btn btn-outline-warning btn-sm me-1"
                                 onclick="openEditReagent(
                                   {{ r.id }},
@@ -94,13 +96,14 @@
                                   '{{ (r.cas_number or '')|e }}',
                                   '{{ (r.product_number or '')|e }}',
                                   '{{ r.specification|e }}',
-                                  '{{ r.quantity }}'
+                                  '{{ r.quantity }}',
+                                  '{{ (r.note or '')|e }}'
                                 )">
                               <i class="bi bi-pencil-square"></i>
                               <span class="d-none d-sm-inline">编辑</span>
                             </button>
                             <form class="d-inline" method="post"
-                                  action="{{ url_for('admin.delete_reagent', reagent_id=r.id) }}"
+                                  action="{{ url_for('reagent.delete_reagent', reagent_id=r.id) }}"
                                   onsubmit="return confirm('确认删除试剂「{{ r.name }}」？')">
                                 <input type="hidden" name="ref" value="search">
                                 <input type="hidden" name="q" value="{{ query }}">
@@ -108,7 +111,6 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -231,6 +233,11 @@
             <input type="number" class="form-control" name="quantity" id="editQty"
                    min="0" step="any" required>
           </div>
+          
+          <div class="mb-3">
+            <label class="form-label">备注</label>
+            <textarea class="form-control" name="note" id="editNote" rows="3" maxlength="500"></textarea>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -268,13 +275,14 @@ function openWithdrawal(reagentId, name, stock, spec) {
     setTimeout(() => document.getElementById('withdrawalQty').focus(), 300);
 }
 
-function openEditReagent(reagentId, name, casNumber, productNumber, spec, quantity) {
+function openEditReagent(reagentId, name, casNumber, productNumber, spec, quantity, note) {
   document.getElementById('editReagentForm').action = '/reagent/edit/' + reagentId;
   document.getElementById('editName').value = name;
   document.getElementById('editCas').value = casNumber || '';
   document.getElementById('editProductNumber').value = productNumber || '';
   document.getElementById('editSpec').value = spec;
   document.getElementById('editQty').value = quantity;
+  document.getElementById('editNote').value = note;
 
   new bootstrap.Modal(document.getElementById('editReagentModal')).show();
   setTimeout(() => document.getElementById('editName').focus(), 300);
