@@ -40,6 +40,7 @@ class Reagent(db.Model):
     cas_number = db.Column(db.String(50), nullable=True)
     product_number = db.Column(db.String(100), nullable=True)   # 新增
     specification = db.Column(db.String(100), nullable=False)
+    note = db.Column(db.Text, default='')   # 新增
     quantity = db.Column(db.Float, default=0.0)
     cabinet_id = db.Column(db.Integer, db.ForeignKey('cabinets.id'), nullable=False)
     last_stock_in = db.Column(db.DateTime, nullable=True)
@@ -57,6 +58,7 @@ class StockRecord(db.Model):
     cas_number = db.Column(db.String(50), nullable=True)
     product_number = db.Column(db.String(100), nullable=True)   # 新增
     specification = db.Column(db.String(100), nullable=True)
+    note = db.Column(db.Text, default='')   # 新增
     cabinet_name = db.Column(db.String(100), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'),
                         nullable=True)
@@ -74,5 +76,6 @@ class DepletionAlert(db.Model):
     cas_number = db.Column(db.String(50), nullable=True)
     product_number = db.Column(db.String(100), nullable=True)   # 新增
     specification = db.Column(db.String(100), nullable=True)
+    note = db.Column(db.Text, default='')   # 新增
     cabinet_id = db.Column(db.Integer, db.ForeignKey('cabinets.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
