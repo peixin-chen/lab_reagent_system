@@ -148,31 +148,10 @@ def records():
     if op_filter in ('in', 'out'):
         q = q.filter_by(operation_type=op_filter)
     pagination = q.order_by(StockRecord.timestamp.desc()).paginate(
-        page=page, per_page=25, error_out=False)
+        page=page, per_page=200, error_out=False)
     return render_template('admin/records.html',
                            pagination=pagination,
                            op_filter=op_filter)
-
-
-# ────────────────── 删除试剂 ──────────────────
-@admin_bp.route('/reagents/delete/<int:reagent_id>', methods=['POST'])
-@login_required
-@admin_required
-def delete_reagent(reagent_id):
-    reagent = Reagent.query.get_or_404(reagent_id)
-    cabinet_id = reagent.cabinet_id
-    name = reagent.name
-    # 保留记录
-    StockRecord.query.filter_by(reagent_id=reagent.id).update({'reagent_id': None})
-    db.session.delete(reagent)
-    db.session.commit()
-    flash(f'试剂"{name}"已删除', 'success')
-
-    ref = request.form.get('ref', '')
-    if ref == 'search':
-        q = request.form.get('q', '')
-        return redirect(url_for('main.search', q=q))
-    return redirect(url_for('main.index', cabinet_id=cabinet_id))
 
 
 # ────────────────── 删除耗尽提醒 ──────────────────

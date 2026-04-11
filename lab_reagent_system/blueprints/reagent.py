@@ -7,7 +7,7 @@ from datetime import datetime
 reagent_bp = Blueprint('reagent', __name__)
 
 
-def _save_record(reagent_id, name, cas, product_number, spec, cabinet_name, qty, op_type):
+def _save_record(reagent_id, name, cas, product_number, spec, note, cabinet_name, qty, op_type):
     """保存入库/领用记录"""
     record = StockRecord(
         reagent_id=reagent_id,
@@ -15,6 +15,7 @@ def _save_record(reagent_id, name, cas, product_number, spec, cabinet_name, qty,
         cas_number=cas,
         product_number=product_number,
         specification=spec,
+        note=note,
         cabinet_name=cabinet_name,
         user_id=current_user.id,
         user_name=current_user.name,
@@ -32,6 +33,7 @@ def add():
     spec = request.form.get('specification', '').strip()
     cabinet_id = request.form.get('cabinet_id', type=int)
     product_number = request.form.get('product_number', '').strip() or None
+    note = request.form.get('note', '').strip() or None
 
     try:
         quantity = float(request.form.get('quantity', 0))
@@ -80,13 +82,14 @@ def add():
             cas_number=cas,
             product_number=product_number,
             specification=spec,
+            note=note,
             quantity=quantity,
             cabinet_id=cabinet_id,
             last_stock_in=datetime.now()
         )
         db.session.add(reagent)
         db.session.flush()
-        _save_record(reagent.id, name, cas, product_number, spec, cabinet.name, quantity, 'in')
+        _save_record(reagent.id, name, cas, product_number, spec, note, cabinet.name, quantity, 'in')
         db.session.commit()
         flash(f'试剂"{name}"添加成功', 'success')
 
@@ -95,9 +98,11 @@ def add():
 @reagent_bp.route('/edit/<int:reagent_id>', methods=['POST'])
 @login_required
 def edit(reagent_id):
+    """
     if not current_user.is_admin:
         flash('只有管理员可以修改试剂信息', 'danger')
         return redirect(url_for('main.index'))
+    """
 
     reagent = Reagent.query.get_or_404(reagent_id)
 
@@ -105,6 +110,7 @@ def edit(reagent_id):
     cas = request.form.get('cas_number', '').strip() or None
     product_number = request.form.get('product_number', '').strip() or None
     spec = request.form.get('specification', '').strip()
+    note = request.form.get('note', '').strip() or None
 
     try:
         quantity = float(request.form.get('quantity', 0))
@@ -157,12 +163,31 @@ def edit(reagent_id):
     reagent.cas_number = cas
     reagent.product_number = product_number
     reagent.specification = spec
+    reagent.note = note
     reagent.quantity = quantity
 
     db.session.commit()
     flash(f'试剂“{reagent.name}”信息修改成功', 'success')
     return redirect(back_url)
 
+# ────────────────── 删除试剂 ──────────────────
+@reagent_bp.route('/reagents/delete/<int:reagent_id>', methods=['POST'])
+@login_required
+def delete_reagent(reagent_id):
+    reagent = Reagent.query.get_or_404(reagent_id)
+    cabinet_id = reagent.cabinet_id
+    name = reagent.name
+    # 保留记录
+    StockRecord.query.filter_by(reagent_id=reagent.id).update({'reagent_id': None})
+    db.session.delete(reagent)
+    db.session.commit()
+    flash(f'试剂"{name}"已删除', 'success')
+
+    ref = request.form.get('ref', '')
+    if ref == 'search':
+        q = request.form.get('q', '')
+        return redirect(url_for('main.search', q=q))
+    return redirect(url_for('main.index', cabinet_id=cabinet_id))
 
 @reagent_bp.route('/stock_in/<int:reagent_id>', methods=['POST'])
 @login_required
@@ -184,7 +209,7 @@ def stock_in(reagent_id):
     reagent.quantity += quantity
     reagent.last_stock_in = datetime.now()
     _save_record(reagent.id, reagent.name, reagent.cas_number, reagent.product_number,
-                 reagent.specification, reagent.cabinet.name, quantity, 'in')
+                 reagent.specification, reagent.note, reagent.cabinet.name, quantity, 'in')
     db.session.commit()
     flash(f'"{reagent.name}" 入库成功，入库数量：{quantity}，当前库存：{reagent.quantity}', 'success')
     return redirect(back_url)
@@ -217,10 +242,11 @@ def withdrawal(reagent_id):
     r_name = reagent.name
     r_cas = reagent.cas_number
     r_spec = reagent.specification
+    r_note = reagent.note
     r_product_number = reagent.product_number
 
     reagent.last_withdrawal = datetime.now()
-    _save_record(reagent.id, r_name, r_cas, r_product_number, r_spec, cabinet_name, quantity, 'out')
+    _save_record(reagent.id, r_name, r_cas, r_product_number, r_spec, r_note, cabinet_name, quantity, 'out')
 
     if new_qty <= 1e-9:
         # 试剂耗尽：创建提醒，删除条目
@@ -229,6 +255,7 @@ def withdrawal(reagent_id):
             cas_number=r_cas,
             product_number=r_product_number,
             specification=r_spec,
+            note=r_note,
             cabinet_id=cabinet_id
         )
         db.session.add(alert)
@@ -273,13 +300,14 @@ def restock_alert(alert_id):
         existing.quantity += quantity
         existing.last_stock_in = datetime.now()
         _save_record(existing.id, existing.name, existing.cas_number, existing.product_number,
-                     existing.specification, cabinet.name, quantity, 'in')
+                     existing.specification, existing.note, cabinet.name, quantity, 'in')
     else:
         reagent = Reagent(
             name=alert.reagent_name,
             cas_number=alert.cas_number,
             product_number=alert.product_number,
             specification=alert.specification,
+            note=alert.note,
             quantity=quantity,
             cabinet_id=alert.cabinet_id,
             last_stock_in=datetime.now()
@@ -287,7 +315,7 @@ def restock_alert(alert_id):
         db.session.add(reagent)
         db.session.flush()
         _save_record(reagent.id, alert.reagent_name, alert.cas_number, alert.product_number,
-                     alert.specification, cabinet.name, quantity, 'in')
+                     alert.specification, alert.note, cabinet.name, quantity, 'in')
 
     db.session.delete(alert)
     db.session.commit()
